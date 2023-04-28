@@ -1,27 +1,46 @@
-node('built-in') 
+pipeline
 {
-    stage('continuous download  ')
+    agent any
+    stages
     {
-      git 'https://github.com/intelliqittrainings/maven.git'
+        stage('condownload')
+        {
+        steps
+        
+        {
+            git 'https://github.com/intelliqittrainings/maven.git'
+        }
+        }    
+        stage('conbuild')
+        {
+        steps
+        
+        {
+            sh 'mvn package'
+        }
+        }
+        stage('condeploy')
+        {
+        steps
+        {
+            deploy adapters: [tomcat9(credentialsId: '1c36c40e-8411-4ffb-8eaf-e99d057f0799', path: '', url: 'http://172.31.6.187:8080')], contextPath: 'testapp', war: '**/*.war'
+        }
+        }
+        stage('contesting')
+        {
+        steps
+        {
+            git 'https://github.com/intelliqittrainings/FunctionalTesting.git'
+            sh 'java -jar /var/lib/jenkins/workspace/declarativepipeline/testing.jar'
+            
+        }
+        }
+        stage('condelivary')
+        {
+            steps
+            {
+                deploy adapters: [tomcat9(credentialsId: '1c36c40e-8411-4ffb-8eaf-e99d057f0799', path: '', url: 'http://172.31.5.249:8080')], contextPath: 'testapp', war: '**/*.war'
+            }
+        }
     }
-    stage('continuous build  ')
-    {
-       sh 'mvn package'
-    }
-    stage('continuous deploy')
-    {
-        deploy adapters: [tomcat9(credentialsId: '1c36c40e-8411-4ffb-8eaf-e99d057f0799', path: '', url: 'http://172.31.6.187:8080')], contextPath: 'testapp', war: '**/*.war'
-    }
-    stage('continuous testing')
-    {
-        git 'https://github.com/intelliqittrainings/FunctionalTesting.git'
-        sh ' java -jar /var/lib/jenkins/workspace/scripted1/testing.jar'
-    }
-    stage('continuous delivery')
-    {
-        input message: 'waiting for DM', submitter: 'tester'
-        deploy adapters: [tomcat9(credentialsId: '1c36c40e-8411-4ffb-8eaf-e99d057f0799', path: '', url: 'http://172.31.5.249:8080')], contextPath: 'prodapp', war: '**/*.war'
-    }
-
-      
 }
